@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Document Scan Compose</string>
+    <string name="full">Full</string>
+    <string name="base">Base</string>
+    <string name="base_with_filter">Base with Filter</string>
+    <string name="scanner_feature_mode">"Scanner feature mode: "</string>
+    <string name="enable_gallery_import">"Enable gallery import: "</string>
+    <string name="set_page_limit_per_scan">"Set page limit per scan: "</string>
+    <string name="scan">Scan</string>
 </resources>

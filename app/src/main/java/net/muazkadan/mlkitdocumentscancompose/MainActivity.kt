@@ -1,8 +1,12 @@
 package net.muazkadan.mlkitdocumentscancompose
 
+import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,10 +32,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.text.isDigitsOnly
+import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import net.muazkadan.mlkitdocumentscancompose.ui.theme.DocumentScanComposeTheme
 
 class MainActivity : ComponentActivity() {
@@ -45,13 +53,44 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val modes = listOf(stringResource(R.string.full),
+                    val context = LocalContext.current
+                    val modes = listOf(
+                        stringResource(R.string.full),
                         stringResource(R.string.base), stringResource(R.string.base_with_filter)
                     )
                     var expanded by remember { mutableStateOf(false) }
                     var selectedOptionText by remember { mutableStateOf(modes[0]) }
                     var enableGalleryImport by remember { mutableStateOf(true) }
                     var pageLimit by remember { mutableIntStateOf(2) }
+
+                    val scanner = remember {
+                        val options =
+                            GmsDocumentScannerOptions.Builder() // configure the scanner options
+                                .setGalleryImportAllowed(true)
+                                .setPageLimit(2)
+                                .setResultFormats(
+                                    GmsDocumentScannerOptions.RESULT_FORMAT_JPEG,
+                                    GmsDocumentScannerOptions.RESULT_FORMAT_PDF
+                                )
+                                .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+                                .build()
+                        GmsDocumentScanning.getClient(options)
+                    }
+                    val scannerLauncher =
+                        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+                            if (result.resultCode == RESULT_OK) {
+                                val gmsResult =
+                                    GmsDocumentScanningResult.fromActivityResultIntent(result.data) // get the result
+                                gmsResult?.pages?.let { pages ->
+                                    pages.forEach { page ->
+                                        val imageUri = page.imageUri // do something with the image
+                                    }
+                                }
+                                gmsResult?.pdf?.let { pdf ->
+                                    val pdfUri = pdf.uri // do something with the PDF
+                                }
+                            }
+                        }
 
                     Scaffold { paddingValues ->
                         Column(
@@ -134,7 +173,16 @@ class MainActivity : ComponentActivity() {
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                                 )
                             }
-                            Button(onClick = { }) {
+                            Button(onClick = {
+                                scanner.getStartScanIntent(context as Activity)
+                                    .addOnSuccessListener { intentSender ->
+                                        scannerLauncher.launch(
+                                            IntentSenderRequest.Builder(intentSender).build()
+                                        )
+                                    }.addOnFailureListener {
+                                    // handle failure
+                                }
+                            }) {
                                 Text(stringResource(R.string.scan))
                             }
                         }

@@ -7,4 +7,5 @@
     <string name="enable_gallery_import">"Enable gallery import: "</string>
     <string name="set_page_limit_per_scan">"Set page limit per scan: "</string>
     <string name="scan">Scan</string>
+    <string name="something_went_wrong">Something went wrong</string>
 </resources>
